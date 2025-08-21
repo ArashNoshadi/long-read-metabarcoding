@@ -259,7 +259,7 @@ A `QuickStart` minimal dataset and a single-command run (on small example data) 
 
 If you use or adapt this pipeline, please cite the manuscript:
 
-> He et al. (2025). *Paving the way for deeper insights into nematode community composition with long-read metabarcoding.*
+> Nowshadi et al. (2025). *Paving the way for deeper insights into nematode community composition with long-read metabarcoding.*
 
 License: include a `LICENSE` file in the repository (MIT is a common, permissive choice). Replace example contact below with a real address in the repository:
 
@@ -268,4 +268,5 @@ License: include a `LICENSE` file in the repository (MIT is a common, permissive
 ---
 
 *This README is written for readers and reviewers to understand the structure, purpose, and usage of the pipeline. If you want, I can also expand any of the per-script usage examples into full CLI help text or produce a short `QuickStart.md` with a single reproducible test run (no large downloads).*
+
 
