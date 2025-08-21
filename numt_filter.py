@@ -1,24 +1,4 @@
-#!/usr/bin/env python3
-# coding: utf-8
-"""
-numt_no_blast.py
 
-NUMT detection (six-frame) + plotting-ready length-distribution tables by IPSC status.
-No BLAST or mtDNA reference required.
-
-Outputs (prefix = basename of input):
- - <prefix>_numt_report.xlsx         : per-sequence full report (including frames_summary)
- - <prefix>_numt_filtered.xlsx       : kept sequences (not flagged final_remove)
- - <prefix>_additional_summaries.xlsx: multiple sheets for plotting & tables
- - CSVs:
-    * <prefix>_lengthcounts_per_length.csv
-    * <prefix>_lengthcounts_pivot_per_length.csv
-    * <prefix>_lengthcounts_binned.csv
-    * <prefix>_lengthcounts_binned_pivot.csv
-
-Usage:
- python numt_no_blast.py --input path/to/cox1_updated.xlsx --output_dir path/to/outdir
-"""
 from __future__ import annotations
 import argparse
 import os
@@ -437,3 +417,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
