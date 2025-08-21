@@ -2,7 +2,7 @@
 
 This repository reproduces the retrieval, curation, filtering and analysis pipeline described in the manuscript:
 
-> **He et al.**, *Paving the way for deeper insights into nematode community composition with long-read metabarcoding*
+> **Noshadi et al.**, *Paving the way for deeper insights into nematode community composition with long-read metabarcoding*
 
 **Date of primary retrieval:** **January 2025**
 
@@ -268,3 +268,4 @@ License: include a `LICENSE` file in the repository (MIT is a common, permissive
 ---
 
 *This README is written for readers and reviewers to understand the structure, purpose, and usage of the pipeline. If you want, I can also expand any of the per-script usage examples into full CLI help text or produce a short `QuickStart.md` with a single reproducible test run (no large downloads).*
+
