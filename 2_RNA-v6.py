@@ -1,12 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-fetch_ncbi_to_csv.py
-
-ورودی: فایل ID (هر خط یک ID) یا یک XML شامل تگ <Id>...</Id>
-خروجی: CSV حاوی رکوردهای کامل NCBI (ستون‌ها قابل توسعه‌اند)
-"""
 
 import os
 import re
@@ -31,9 +22,9 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 socket.setdefaulttimeout(10)
 
 # مقداردهی Entrez (ایمیل را حتماً تغییر دهید یا از متغیر محیطی استفاده کنید)
-Entrez.email = os.environ.get("NCBI_EMAIL", "nowshadiarash@gmail.com")
+Entrez.email = os.environ.get("NCBI_EMAIL", "")
 Entrez.tool  = "nema_itss_fetcher"
-Entrez.api_key = os.environ.get("NCBI_API_KEY", "81b8f961fd2e2bab9a24e2bbe90fb6d17609")  # اگر ندارید رشته خالی بذارید
+Entrez.api_key = os.environ.get("NCBI_API_KEY", "")  # اگر ندارید رشته خالی بذارید
 
 # ---------- لاگینگ ----------
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s',
@@ -338,3 +329,4 @@ if __name__ == "__main__":
         efetch_retries=args.retries,
         delay=args.delay
     )
+
