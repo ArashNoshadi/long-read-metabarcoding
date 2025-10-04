@@ -1,103 +1,88 @@
-# Nematode long-read metabarcoding pipeline
+# Nematode Long-Read Metabarcoding Pipeline
 
-This repository reproduces the retrieval, curation, filtering and analysis pipeline described in the manuscript:
+This repository provides a reproducible implementation of the sequence retrieval, curation, filtering, and analysis pipeline outlined in the manuscript:
 
-> **Noshadi et al.**, *Paving the way for deeper insights into nematode community composition with long-read metabarcoding*
+> **Noshadi et al. (2025)**. *Paving the way for deeper insights into nematode community composition with long-read metabarcoding*. Soil Biology and Biochemistry. https://doi.org/10.1016/j.soilbio.2025.110001
 
-**Date of primary retrieval:** **January 2025**
-
----
-
-## Overview (reader-facing)
-
-This README is a concise, reader-oriented summary of the pipeline and the role of each script. The goal is to make it straightforward for a reviewer or new user to understand what each component does, what inputs are required, and how to run the pipeline end-to-end on small test data or scale it up for full retrieval.
-
-Key points:
-
-* The pipeline retrieves nematode sequences from NCBI Entrez (ESearch → EFetch), parses GenBank records into tabular format, applies quality control and deduplication, performs COI NUMT filtering, checks taxonomic names against GBIF, and runs downstream analyses (alignment, diversity, pairwise metrics).
-* All steps store provenance (raw XML, timestamps, logs) so results can be audited and reproduced.
-* The codebase is modular: retrieval, parsing, filtering, and analysis are separate scripts so reviewers can run or inspect exact parts independently.
+**Date of primary retrieval:** January 2025
 
 ---
 
-## Contents (scripts & files)
+## Overview
 
-* `esearch_download.py`
-  Retrieve ESearch XML results from NCBI Entrez (stores raw XML per query / marker).
+This README offers a clear, user-friendly summary of the pipeline's structure and components. It is designed to help reviewers, researchers, or new users quickly grasp the purpose of each script, required inputs, and how to execute the pipeline end-to-end—whether on small test datasets for validation or at full scale for comprehensive analyses.
 
-* `extract_ids.py`
-  Parse ESearch XML files and extract accession/gi/UID lists (text or CSV output). Adds simple provenance (source file + timestamp).
+Key highlights:
+- The pipeline fetches nematode sequences from NCBI Entrez (via ESearch and EFetch), parses GenBank records into structured tabular formats, applies rigorous quality controls and deduplication, filters potential COI NUMTs (nuclear mitochondrial DNA segments), validates taxonomic names against GBIF, and conducts downstream analyses including sequence alignment, diversity metrics, and pairwise comparisons.
+- Provenance is maintained throughout: raw XML files, timestamps, and logs are stored for full auditability and reproducibility.
+- Modularity is a core design principle—retrieval, parsing, filtering, and analysis scripts are independent, allowing users to inspect, modify, or run specific stages as needed.
 
-* `efetch_fasta_fetcher.py`
-  Batch EFetch utility to download GenBank/FASTA records using lists of UIDs/accessions. Handles batching, retries, optional compression, and logs outputs (`data/genbank_raw/<marker>/batch_*.xml`).
+---
 
-* `fetch_ncbi_to_csv.py`
-  Full GenBank → CSV/Excel parser. Extracts accession, definition, full sequence, and annotated features (organism, host, collection\_date, country / geo\_loc\_name, feature products and locations). Adds `source_file`, `fetch_timestamp`, and raw XML path to each parsed row.
+## Contents
 
-* `numt_filter.py`
-  COI-specific six-frame NUMT detection and cleaning. Uses invertebrate mitochondrial translation table (NCBI table 5). Flags near-full-length ORFs, internal stops, GC outliers and produces a cleaned FASTA plus per-record report.
+- **`esearch_download.py`**: Performs ESearch queries on NCBI Entrez to retrieve XML results containing sequence identifiers (e.g., accessions or UIDs) for specified markers; stores raw XML outputs per query/marker for traceability.
 
-* `sensitivity_summary.py`
-  Length-threshold sensitivity analysis (e.g., test 60/70/80/90/100% thresholds) and NUMT parameter sweeps; emits tables used in supplementary material.
+- **`extract_ids.py`**: Parses ESearch XML files to extract lists of accessions, GIs, or UIDs; outputs in text or CSV format with added provenance metadata (e.g., source file and timestamp).
 
-* `gbif_check.py`
-  GBIF name-matching helper with local caching. Queries GBIF species match API and caches responses to avoid repeated API calls. Produces GBIF match reports and a filtered set keeping records where GBIF phylum = `Nematoda`.
+- **`efetch_fasta_fetcher.py`**: A batch-oriented EFetch tool that downloads GenBank or FASTA records using ID lists; supports batching, automatic retries, optional compression, and detailed logging (outputs to `data/genbank_raw/<marker>/batch_*.xml`).
 
-* `taxa_annotate_and_map.py`
-  Map raw organism strings → curated `Main_Organism`, family assignment, and add ecological/trophic metadata (c–p groups, functional guilds). Uses curated mapping tables for consistency.
+- **`fetch_ncbi_to_csv.py`**: Comprehensive parser converting GenBank XML to CSV/Excel; extracts key fields like accession, sequence, definition, organism, host, collection date, location (country/geo_loc_name), and annotated features (e.g., product names and positions); includes provenance columns such as `source_file`, `fetch_timestamp`, and raw XML path.
 
-* `cdhit_dedup.sh`
-  Optional helper script to run CD-HIT for exact or near-identical sequence deduplication (useful on very large FASTA collections). Provided as a shell wrapper with recommended parameters.
+- **`numt_filter.py`**: Specialized filter for COI sequences to detect and remove potential NUMTs using six-frame translation (invertebrate mitochondrial code, NCBI table 5); identifies near-full-length ORFs, internal stop codons, and GC content outliers; generates a cleaned FASTA file and a detailed per-record report.
 
-* `merged_analysis_optimized_v2.py` *(provided separately)*
-  Core analysis: alignment wrapper interface (MUSCLE/MAFFT), pairwise similarity/overlap calculations, nucleotide diversity (π) and Tajima’s D estimates. Expects aligned FASTA as input; produces Excel workbooks with pairwise tables and diversity stats.
+- **`sensitivity_summary.py`**: Conducts sensitivity analyses for length thresholds (e.g., 60–100% of expected marker length) and NUMT detection parameters; produces tabular summaries for supplementary materials.
+
+- **`gbif_check.py`**: Validates taxonomic names against the GBIF API with local caching to minimize repeated queries; generates match reports and filters records to retain only those with GBIF phylum assignment as `Nematoda`.
+
+- **`taxa_annotate_and_map.py`**: Standardizes raw organism names to a curated `Main_Organism` field, assigns family-level taxonomy, and annotates with ecological metadata (e.g., c–p values, functional guilds) using predefined mapping tables.
+
+- **`cdhit_dedup.sh`**: Shell wrapper for CD-HIT to perform exact or near-identical sequence deduplication on large FASTA files; includes recommended parameters for efficiency.
+
+- **`merged_analysis_optimized_v2.py`** *(provided separately)*: Central analysis script handling sequence alignment (via MUSCLE/MAFFT interfaces), pairwise similarity/overlap calculations, nucleotide diversity (π), and Tajima’s D; requires aligned FASTA input and outputs Excel workbooks with metrics.
 
 ---
 
 ## Requirements
 
-* **Python:** 3.9+
+- **Python**: 3.9 or higher.
 
-* **Python packages:** `biopython`, `pandas`, `numpy`, `requests`, `tqdm`, `numba`, `psutil`, `openpyxl`, `matplotlib`
-  Install with:
-
-  ```bash
+- **Python packages**: `biopython`, `pandas`, `numpy`, `requests`, `tqdm`, `numba`, `psutil`, `openpyxl`, `matplotlib`.
+  Install via:
+  ```bash:disable-run
   python -m pip install biopython pandas numpy requests tqdm numba psutil openpyxl matplotlib
   ```
 
-* **Optional / recommended tools:**
-
-  * **MUSCLE v5** (recommended for large alignments)
-  * **CD-HIT v4.x** (fast clustering / deduplication)
-  * **OpenCL / PyOpenCL** — optional GPU acceleration for computationally heavy routines (the code falls back to CPU if unavailable)
+- **Optional/recommended tools**:
+  - **MUSCLE v5**: For efficient large-scale alignments.
+  - **CD-HIT v4.x**: For rapid sequence clustering and deduplication.
+  - **OpenCL/PyOpenCL**: For GPU-accelerated computations (code gracefully falls back to CPU if unavailable).
 
 ---
 
-## Environment variables & configuration
+## Environment Variables and Configuration
 
-* `ENTREZ_EMAIL` — **required** by NCBI Entrez; set to the user's contact email.
-  Example (bash):
-
+- **`ENTREZ_EMAIL`**: Required for NCBI Entrez compliance; set to your email address.
+  Example:
   ```bash
   export ENTREZ_EMAIL="your.email@example.com"
   ```
 
-* `ENTREZ_API_KEY` — optional, strongly recommended for large retrievals to increase rate limits and throughput. Set similarly:
-
+- **`ENTREZ_API_KEY`**: Optional but highly recommended for high-volume queries to boost rate limits.
+  Example:
   ```bash
   export ENTREZ_API_KEY="your_ncbi_api_key"
   ```
 
-* Per-script configuration is handled by CLI flags (see usage examples below) or a small YAML/JSON config file (if the script supports it). Typical tunables: `--batch-size`, `--sleep` (seconds between requests), `--min-aa`, `--min-aa-pct`, `--expected-length`.
+- Script configurations are primarily managed via command-line flags (e.g., `--batch-size`, `--sleep` for request delays, `--min-aa`, `--min-aa-pct`, `--expected-length`). Some scripts also support YAML/JSON config files for batch runs.
 
 ---
 
-## Quick examples (how to run the main pieces)
+## Quick Examples
 
-> **Note:** The examples assume you have set `ENTREZ_EMAIL` and optionally `ENTREZ_API_KEY`.
+**Note**: Ensure `ENTREZ_EMAIL` (and optionally `ENTREZ_API_KEY`) is set before running.
 
-1. **ESearch (retrieve UIDs for a marker):**
-
+1. **ESearch (Retrieve UIDs for a Marker)**:
    ```bash
    python esearch_download.py \
      --term "txid6231[Organism:exp] AND (COI OR cox1 OR COX1)" \
@@ -105,14 +90,12 @@ Key points:
      --out data/raw_esearch/COI_esearch.xml
    ```
 
-2. **Extract IDs from ESearch XML:**
-
+2. **Extract IDs from ESearch XML**:
    ```bash
    python extract_ids.py --xml data/raw_esearch/COI_esearch.xml --id-out data/parsed/COI_ids.txt
    ```
 
-3. **Batch EFetch (download GenBank XML / FASTA in batches):**
-
+3. **Batch EFetch (Download GenBank Records)**:
    ```bash
    python efetch_fasta_fetcher.py \
      --id-file data/parsed/COI_ids.txt \
@@ -122,16 +105,14 @@ Key points:
      --compress
    ```
 
-4. **Parse GenBank XML → CSV (extract sequences + features):**
-
+4. **Parse GenBank XML to CSV**:
    ```bash
    python fetch_ncbi_to_csv.py \
      --input-dir data/genbank_raw/COI \
      --out data/parsed/COI_parsed.csv
    ```
 
-5. **NUMT filtering for COI (six-frame translation):**
-
+5. **NUMT Filtering for COI**:
    ```bash
    python numt_filter.py \
      --input data/parsed/COI_parsed.csv \
@@ -143,8 +124,7 @@ Key points:
      --min-aa-pct 0.8
    ```
 
-6. **Length sensitivity (example for 18S expected length):**
-
+6. **Length Sensitivity Analysis (e.g., for 18S)**:
    ```bash
    python sensitivity_summary.py \
      --input data/parsed/18S_parsed.csv \
@@ -153,26 +133,23 @@ Key points:
      --thresholds 0.6 0.7 0.8 0.9 1.0
    ```
 
-7. **GBIF name matching & caching:**
-
+7. **GBIF Name Matching**:
    ```bash
    python gbif_check.py \
      --names data/parsed/COI_parsed.csv --name-col organism \
      --cache-dir data/gbif_cache --out SUPPLEMENTARY_TABLES/gbif_match_report.csv
    ```
 
-8. **Optional: deduplicate FASTA with CD-HIT:**
-
+8. **Deduplicate FASTA with CD-HIT**:
    ```bash
    bash cdhit_dedup.sh input.fasta output_dedup.fasta 1.00
    ```
 
-9. **Core analysis (alignment must be produced first; merged\_analysis expects aligned FASTA):**
-
+9. **Core Analysis (After Alignment)**:
    ```bash
-   # align with MUSCLE v5 (or via provided wrapper)
+   # Align (using provided wrapper or directly with MUSCLE)
    bash alignment_wrapper.sh data/cleaned_fastas/COI_cleaned.fasta data/cleaned_fastas/COI_aligned.fasta
-   # then:
+   # Analyze
    python merged_analysis_optimized_v2.py \
      --fasta data/cleaned_fastas/COI_aligned.fasta \
      --taxmap taxonomic_mapping.tsv \
@@ -181,93 +158,72 @@ Key points:
 
 ---
 
-## Pipeline steps — brief explanation for each stage
+## Pipeline Steps
 
-1. **Retrieval (ESearch → EFetch)**
+1. **Retrieval (ESearch → EFetch)**: Queries NCBI Entrez for nematode sequences (taxon ID 6231) filtered by markers; stores raw ESearch XML and batched EFetch outputs in `data/` for complete traceability.
 
-   * Query NCBI Entrez with taxon filter (`txid6231[Organism:exp]`) plus gene markers. Save raw ESearch XML and all batch EFetch outputs (raw XML or compressed XML) in `data/` for provenance.
+2. **Parsing**: Transforms GenBank XML into tabular formats (CSV/Excel), extracting essential metadata (e.g., accession, sequence, organism, location) and adding provenance details.
 
-2. **Parsing**
+3. **Quality Control & Normalization**: Normalizes sequences (e.g., U→T, uppercase, remove non-standard bases), filters ambiguous or low-quality entries (e.g., "uncultured"), deduplicates, and applies marker-specific length thresholds with sensitivity testing.
 
-   * Convert GenBank XML to tabular CSV/Excel with per-record fields: accession, sequence, definition, organism, host, collection\_date, country/geo\_loc\_name, lat/long (if present), features and product annotations. Add `source_file` and `fetch_timestamp`.
+4. **Taxonomic Validation (GBIF)**: Matches organism names to GBIF database entries (with caching); retains only nematode-confirmed records and generates detailed reports.
 
-3. **Quality control & normalization**
+5. **NUMT Filtering (COI-Specific)**: Employs six-frame translation to flag NUMT artifacts via ORF integrity, stop codons, and GC anomalies; outputs cleaned FASTA and flagged records.
 
-   * Nucleotide normalization (U→T, uppercase, strip non-ATCGN), ambiguous label filtering (e.g., `uncultured`, `environmental sample`), deduplication (collapse identical sequences or accessions), and length filtering (marker-specific expected lengths and sensitivity analysis).
+6. **Alignment & Pairwise Metrics**: Generates alignments (MUSCLE v5 preferred) and computes pairwise identity/overlap on non-gapped positions.
 
-4. **Taxonomic cross-checking (GBIF)**
+7. **Diversity & Neutrality Analyses**: Calculates nucleotide diversity (π) and Tajima’s D for sufficiently sampled groups, with warnings for low-sample scenarios.
 
-   * Use GBIF species match API to validate organism names and ensure phylum = `Nematoda` where possible. Cache results in `data/gbif_cache/` to avoid repeated API calls.
+8. **Geographic & Ecological Annotation**: Creates interactive maps (Plotly/HTML) from location metadata; assigns curated taxonomic families and ecological traits (e.g., trophic guilds).
 
-5. **NUMT filtering (COI)**
-
-   * Six-frame translation with invertebrate mt code (table 5), ORF finding, internal stop checks, GC outlier detection. Produce cleaned FASTA and a CSV report with flags (`pass`, `numt_candidate`, `internal_stops`, `gc_outlier`, `too_short`).
-
-6. **Alignment & pairwise similarity**
-
-   * Produce multiple sequence alignment (MUSCLE v5 recommended for large datasets). Compute pairwise % identity and overlap (non-gap shared positions).
-
-7. **Diversity & neutrality tests**
-
-   * Compute nucleotide diversity (π) and simple Tajima’s D on groups with adequate sample size (script reports stats and warns when sample sizes are too small for reliable inference).
-
-8. **Geographic mapping and ecological annotation**
-
-   * Where collection location metadata exists, export interactive Plotly maps and static PNGs; annotate taxa with curated family and ecological/trophic assignments (trophic c–p groups, functional guilds).
-
-9. **Outputs & reports**
-
-   * Cleaned FASTA files, per-record CSVs, NUMT reports, sensitivity tables, GBIF match tables, Excel workbooks with pairwise and diversity summaries, interactive maps (HTML), and a `logs/` folder with run logs.
+9. **Outputs & Reports**: Produces cleaned FASTAs, CSVs, reports (e.g., NUMT, GBIF), Excel summaries, maps, and logs in structured directories.
 
 ---
 
-## Provenance & reproducibility
+## Provenance & Reproducibility
 
-* Raw XML files, parsed CSVs, and run logs are retained in `data/` and `logs/` to allow exact re-runs and auditing.
-* Each parsed record contains `source_file`, `fetch_timestamp`, and `raw_xml_path`.
-* Provide `environment.yml` or `requirements.txt` with exact tool versions used. For archival, export `conda list --explicit` or `pip freeze > requirements_frozen.txt`.
-
----
-
-## Tips & troubleshooting (common issues)
-
-* **NCBI rate limits / HTTP 429**: set `ENTREZ_API_KEY` and increase sleep between requests. Use smaller batch sizes if problems persist.
-* **Missing geographic metadata**: many GenBank records lack coordinates. Where possible, contact original submitters or supplement with sample metadata.
-* **NUMT edge cases**: adjust `--min-aa` and `--min-aa-pct` and run the sensitivity script. Review `COI_numt_report.csv` for borderline cases.
-* **Large alignments memory**: use MUSCLE v5 `-super5` or run alignments on HPC nodes; consider chunked alignment/merging strategies if datasets are enormous.
-* **GBIF API failures**: the GBIF helper caches responses; if the API is down, operate from cache and re-run checks when service resumes.
+- All raw data (XML, CSVs) and logs are preserved in `data/` and `logs/` for re-runs and verification.
+- Parsed records include provenance fields like `source_file` and `fetch_timestamp`.
+- Include an `environment.yml` or `requirements.txt` with pinned versions; for exact replication, use `conda list --explicit` or `pip freeze > requirements_frozen.txt`.
 
 ---
 
-## Suggested outputs for reviewers
+## Tips & Troubleshooting
 
-Provide the following with the manuscript submission:
-
-* `data/raw_esearch/` — raw ESearch XML
-* `data/genbank_raw/` — raw EFetch XML batches
-* `data/parsed/` — parsed CSV/XLSX records
-* `data/cleaned_fastas/` — cleaned FASTA by marker
-* `SUPPLEMENTARY_TABLES/` — `filter_summary.xlsx`, `length_sensitivity.xlsx`, `numt_sensitivity.xlsx`, `gbif_match_report.xlsx`, `trophic_cp_assignments.xlsx`
-* `results/` — `genetic_summary_optimized.xlsx`, `diversity_stats.xlsx`, `maps/*.html`
-* `logs/` — run logs for each script
-
-A `QuickStart` minimal dataset and a single-command run (on small example data) is recommended so reviewers can validate the pipeline quickly without re-downloading large datasets.
+- **NCBI Rate Limits (HTTP 429)**: Use `ENTREZ_API_KEY`, increase `--sleep`, or reduce `--batch-size`.
+- **Geographic Data Gaps**: Supplement with external sources if needed, as many records lack coordinates.
+- **NUMT Edge Cases**: Tune parameters and review reports; use sensitivity analyses for optimization.
+- **Memory for Large Alignments**: Opt for MUSCLE's `-super5` mode or HPC resources; consider partitioning datasets.
+- **GBIF API Issues**: Rely on cached results during outages and retry later.
 
 ---
 
-## Citation, license & contact
+## Suggested Outputs for Reviewers
 
-If you use or adapt this pipeline, please cite the manuscript:
+Include these in manuscript submissions:
+- `data/raw_esearch/`: Raw ESearch XML.
+- `data/genbank_raw/`: Batched EFetch XML.
+- `data/parsed/`: Parsed CSVs/XLSX.
+- `data/cleaned_fastas/`: Filtered FASTAs.
+- `SUPPLEMENTARY_TABLES/`: Summaries (e.g., filter, length/NUMT sensitivity, GBIF reports, trophic assignments).
+- `results/`: Metrics (e.g., genetic summaries, diversity stats) and maps (`*.html`).
+- `logs/`: Script execution logs.
 
-> Noshadi et al. (2025). *Paving the way for deeper insights into nematode community composition with long-read metabarcoding.*
-
-License: include a `LICENSE` file in the repository (MIT is a common, permissive choice). Replace example contact below with a real address in the repository:
-
-**Contact:** Arash Noshadi — `Nowshadiarash@gmail.com`
+For quick validation, provide a `QuickStart.md` with a minimal dataset and one-command execution (avoiding large downloads).
 
 ---
 
-*This README is written for readers and reviewers to understand the structure, purpose, and usage of the pipeline. If you want, I can also expand any of the per-script usage examples into full CLI help text or produce a short `QuickStart.md` with a single reproducible test run (no large downloads).*
+## Citation, License & Contact
 
+When using or adapting this pipeline, cite:
 
+> Noshadi et al. (2025). *Paving the way for deeper insights into nematode community composition with long-read metabarcoding*. Soil Biology and Biochemistry. https://doi.org/10.1016/j.soilbio.2025.110001
 
+License: MIT (see `LICENSE` file).
+
+**Contact**: Arash Noshadi — `Nowshadiarash@gmail.com`
+
+---
+
+*This README focuses on clarity and usability for readers and reviewers. For detailed per-script help, run scripts with `--help`. If needed, a `QuickStart.md` can be added for a streamlined test run.*
+```
